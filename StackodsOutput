@@ -1,0 +1,75 @@
+/*web link: http://support.sas.com/kb/45/194.html*/
+
+/* Sample Code 1.  This works in all SAS versions. */
+
+/* Create a sample data set. */
+data travel;
+   input AIR DEST & :$10. NAME :$ HOTEL;
+   datalines;
+1500      PARIS         THOMAS     712
+1500      PARIS         THOMAS     594
+1523      FRANKFURT     BECKER     284
+;
+run;
+
+options orientation=landscape nodate number;
+ods pdf file="allSASversions.pdf" notoc;
+
+/* Specify the PROC MEANS OUTPUT statement to create an output data set. */
+proc means data=travel missing noprint;
+   output out=myout(drop= _type_ _freq_);
+run;
+
+/* Print the default data set. */
+/* It does not look like the procedure output. */
+proc print data=myout noobs;
+   title 'Default Data set ';
+run;
+
+/* Perform an interim transpose of the data. */
+proc transpose data=myout out=mytransp name=Variable;
+   id _stat_;
+run;
+
+/* The printed output now looks like the procedure output. */
+proc print data=mytransp noobs;
+   title 'Print data set to look like MEANS procedure output';
+run;
+
+ods pdf close;
+
+title;
+footnote;
+
+
+/* Sample Code 2.  This works in SAS 9.3 and higher. */
+
+options orientation=landscape nodate number;
+ods pdf file="new_for_9.3.pdf" notoc;
+
+ods noptitle;
+title "Default table from the MEANS procedure";
+
+ods output summary=odsdsn(drop=_control_);
+proc means data=sashelp.cars n nmiss min max mean stackodsoutput;
+   class origin;
+   output out=nonods;
+run;
+
+title "Original output data set from the OUTPUT statement";
+
+proc report data=nonods nowd;
+run;
+	
+title "ODS OUTPUT data set with STACKODSOUTPUT option added";
+proc report data=odsdsn nowd  ; 
+run;
+
+title "PROC REPORT enhancement to the ODS OUTPUT data set with STACKODSOUTPUT option added";
+proc report data=odsdsn nowd spanrows ; 
+   define origin / order;
+   define nobs   / order;
+run;
+
+ods _all_ close;
+title;
